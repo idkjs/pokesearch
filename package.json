@@ -16,11 +16,7 @@
     "graphql-tools": "^2.21.0"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "server": "node server",
-    "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject",
+    "start": "node server",
     "prepare": "npm link bs-platform",
     "precommit": "lint-staged",
     "knex": "node_modules/.bin/knex --knexfile ./server/knexfile.js"
