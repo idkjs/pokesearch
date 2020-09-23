@@ -1,13 +1,11 @@
 const path = require("path");
 require("dotenv").config();
-
+require("apollo-cache-control");
 const express = require("express");
-const bodyParser = require("body-parser");
-const { graphqlExpress } = require("apollo-server-express");
-const { makeExecutableSchema } = require("graphql-tools");
-const expressPlayground = require("graphql-playground-middleware-express")
-  .default;
-const { ApolloEngine } = require("apollo-engine");
+const { ApolloServer, gql } = require("apollo-server-express");
+
+const app = express();
+const pathgql = "/graphql";
 
 const Pokemon = require("./models/Pokemon.js");
 const Ability = require("./models/Ability.js");
@@ -25,29 +23,29 @@ console.log("ENV:");
 console.log("PROD", __PROD__);
 console.log("CACHE", __CACHE__);
 
-const schema = makeExecutableSchema({
-  typeDefs,
-  resolvers
-});
-
 const pokeApiConnector = new PokeApiConnector();
 
 const context = {
   Pokemon: new Pokemon({ connector: pokeApiConnector }),
   Ability: new Ability({ connector: pokeApiConnector }),
-  UserPreferences: UserPreferences({ connector: userPreferencesConnector })
+  UserPreferences: UserPreferences({ connector: userPreferencesConnector }),
 };
-
-const updateContext = user_token => {
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  context,
+  tracing: true,
+  cacheControl: { defaultMaxAge: 5 },
+  introspection: true,
+});
+const updateContext = (user_token) => {
   if (!user_token || user_token === context.user_token) {
     return context;
   }
   return Object.assign(context, {
-    user_token
+    user_token,
   });
 };
-
-const app = express();
 
 app.use((req, res, next) => {
   let token = req.get("user_token");
@@ -57,28 +55,8 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(
-  "/graphql",
-  bodyParser.json(),
-  graphqlExpress(req => ({
-    schema,
-    context: updateContext(req.user_token),
-    tracing: true,
-    cacheControl: __CACHE__
-  }))
+server.applyMiddleware({ app, path: pathgql });
+
+app.listen({ port: 4000 }, () =>
+  console.log(`🚀 Server ready at http://localhost:4000${server.graphqlPath}`)
 );
-
-app.use("/playground", expressPlayground({ endpoint: "/graphql" }));
-app.use(express.static(path.join(__dirname, "..", "build")));
-app.get("/", function(req, res) {
-  res.sendFile(path.join(__dirname, "..", "build", "index.html"));
-});
-
-const engine = new ApolloEngine({
-  apiKey: process.env.ENGINE_API
-});
-
-engine.listen({
-  port: __PROD__ ? 80 : 3001,
-  expressApp: app
-});

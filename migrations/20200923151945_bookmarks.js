@@ -1,5 +1,5 @@
-exports.up = function(knex, Promise) {
-  return knex.schema.createTable("bookmarks", table => {
+exports.up = function (knex, Promise) {
+  return knex.schema.createTable("bookmarks", (table) => {
     table.increments("id");
     table.integer("pokemon_id").notNull();
     table.string("pokemon_name").notNull();
@@ -8,6 +8,6 @@ exports.up = function(knex, Promise) {
   });
 };
 
-exports.down = function(knex, Promise) {
+exports.down = function (knex, Promise) {
   return knex.schema.dropTableIfExists("bookmarks");
 };
