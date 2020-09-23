@@ -1,3 +1,5 @@
+Doesnt work for sqlite/graphql. See for knexjs setup, husky set up, sqlite setup
+
 https://gist.github.com/guy-stapleton/baee8845c9378204c1176bdb8699969a
 
 Configuring the setup
